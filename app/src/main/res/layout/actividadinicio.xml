@@ -1,0 +1,73 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".ActividadInicio">
+
+    <EditText
+        android:id="@+id/editTextBuscar"
+        android:layout_width="354dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="54dp"
+        android:hint="Buscar producto..."
+        android:imeOptions="actionSearch"
+        android:inputType="text" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewResultados"
+        android:layout_width="match_parent"
+        android:layout_height="215dp"
+        android:layout_below="@+id/editTextBuscar"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="60dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <ImageView
+        android:id="@+id/ubicacion"
+        android:layout_width="52dp"
+        android:layout_height="62dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="31dp"
+        android:layout_marginBottom="17dp"
+        app:srcCompat="@drawable/_794702" />
+
+    <ImageView
+        android:id="@+id/imageView15"
+        android:layout_width="69dp"
+        android:layout_height="71dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="15dp"
+        app:srcCompat="@drawable/pngegg" />
+
+    <ImageView
+        android:id="@+id/informacion"
+        android:layout_width="65dp"
+        android:layout_height="57dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginEnd="165dp"
+        android:layout_marginBottom="23dp"
+        app:srcCompat="@drawable/perfil" />
+
+    <TextView
+        android:id="@+id/textViewVolver"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="9dp"
+        android:layout_marginTop="10dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="Volver"
+        android:textColor="#000000"
+        android:textSize="18sp" />
+</RelativeLayout>

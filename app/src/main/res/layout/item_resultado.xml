@@ -1,0 +1,49 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/imagenResultado"
+        android:layout_width="106dp"
+        android:layout_height="107dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/ibuprofeno" />
+
+    <TextView
+        android:id="@+id/nombreResultado"
+        android:layout_width="217dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="19dp"
+        android:layout_marginTop="20dp"
+        android:layout_toEndOf="@id/imagenResultado"
+        android:text="Nombre del Producto"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/valorResultado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Valor: $0.00"
+        android:textSize="14sp"
+        android:layout_below="@id/nombreResultado"
+        android:layout_marginTop="4dp"
+        android:layout_toEndOf="@id/imagenResultado"
+        android:layout_marginStart="16dp"/>
+
+    <TextView
+        android:id="@+id/cantidadResultado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cantidad: 0"
+        android:textSize="14sp"
+        android:layout_below="@id/valorResultado"
+        android:layout_marginTop="4dp"
+        android:layout_toEndOf="@id/imagenResultado"
+        android:layout_marginStart="16dp"/>
+
+</RelativeLayout>

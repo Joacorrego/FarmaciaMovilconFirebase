@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">farmaciamovil</string>
+    <string name="texto_salir">Salir</string>
+    <string name="producto_nombre">Ibuprofeno 600 Mg</string>
+    <string name="producto_cantidad">10 Unidades</string>
+    <string name="producto_precio">$ 1000 CLP</string>
+</resources>
