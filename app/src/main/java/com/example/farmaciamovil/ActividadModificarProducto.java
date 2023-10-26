@@ -22,7 +22,7 @@ public class ActividadModificarProducto extends AppCompatActivity {
     private EditText valorProductoDetalle;
     private EditText descripcionProductoDetalle;
     private Button botonGuardarCambios;
-    private Button botonEliminarProducto; // El botón de eliminar
+    private Button botonEliminarProducto;
     private static final int SELECCIONAR_IMAGEN = 1;
 
     @Override
@@ -46,7 +46,7 @@ public class ActividadModificarProducto extends AppCompatActivity {
         valorProductoDetalle = findViewById(R.id.valorProductoDetalle);
         descripcionProductoDetalle = findViewById(R.id.descripcionProductoDetalle);
         botonGuardarCambios = findViewById(R.id.botonGuardarCambios);
-        botonEliminarProducto = findViewById(R.id.botonEliminarProducto); // El botón de eliminar
+        botonEliminarProducto = findViewById(R.id.botonEliminarProducto);
 
         try {
             nombreProductoDetalle.setText(producto.getString("nombre"));
@@ -119,7 +119,7 @@ public class ActividadModificarProducto extends AppCompatActivity {
     private void volverAActividadSeleccionarProducto() {
         Intent intent = new Intent(ActividadModificarProducto.this, ActividadSeleccionarProducto.class);
         startActivity(intent);
-        finish(); // Cierra la actividad actual
+        finish();
     }
 
 
