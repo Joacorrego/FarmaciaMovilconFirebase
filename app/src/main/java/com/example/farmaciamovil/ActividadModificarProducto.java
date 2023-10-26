@@ -11,7 +11,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +22,7 @@ public class ActividadModificarProducto extends AppCompatActivity {
     private EditText valorProductoDetalle;
     private EditText descripcionProductoDetalle;
     private Button botonGuardarCambios;
+    private Button botonEliminarProducto; // El botón de eliminar
     private static final int SELECCIONAR_IMAGEN = 1;
 
     @Override
@@ -46,6 +46,7 @@ public class ActividadModificarProducto extends AppCompatActivity {
         valorProductoDetalle = findViewById(R.id.valorProductoDetalle);
         descripcionProductoDetalle = findViewById(R.id.descripcionProductoDetalle);
         botonGuardarCambios = findViewById(R.id.botonGuardarCambios);
+        botonEliminarProducto = findViewById(R.id.botonEliminarProducto); // El botón de eliminar
 
         try {
             nombreProductoDetalle.setText(producto.getString("nombre"));
@@ -89,7 +90,17 @@ public class ActividadModificarProducto extends AppCompatActivity {
                 }
             }
         });
+
+
+        botonEliminarProducto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String nombreArchivoActual = producto.optString("nombre") + ".json";
+                eliminarJSONDeFirebase(nombreArchivoActual);
+            }
+        });
     }
+
 
     private void eliminarJSONDeFirebase(String nombreArchivo) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -97,13 +108,20 @@ public class ActividadModificarProducto extends AppCompatActivity {
 
         referenciaAlmacenamiento.child(nombreArchivo).delete()
                 .addOnSuccessListener(aVoid -> {
-
+                    volverAActividadSeleccionarProducto();
                 })
                 .addOnFailureListener(e -> {
                     e.printStackTrace();
-
                 });
     }
+
+
+    private void volverAActividadSeleccionarProducto() {
+        Intent intent = new Intent(ActividadModificarProducto.this, ActividadSeleccionarProducto.class);
+        startActivity(intent);
+        finish(); // Cierra la actividad actual
+    }
+
 
     private void guardarCambiosEnFirebase(String nombreArchivo) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -112,11 +130,10 @@ public class ActividadModificarProducto extends AppCompatActivity {
         String nuevoJSON = producto.toString();
         referenciaAlmacenamiento.putBytes(nuevoJSON.getBytes())
                 .addOnSuccessListener(taskSnapshot -> {
-
+                    volverAActividadSeleccionarProducto();
                 })
                 .addOnFailureListener(e -> {
                     e.printStackTrace();
-                    
                 });
     }
 
