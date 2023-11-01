@@ -1,20 +1,24 @@
 package com.example.farmaciamovil;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import org.json.JSONObject;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
+import android.view.View;
+import android.widget.Button;
+
 
 public class ActividadSeleccionarProducto extends AppCompatActivity {
 
     private RecyclerView productRecyclerView;
     private ProductoAdaptador2 productoAdaptador;
-    private List<JSONObject> listaProductos;
+    private List<DocumentSnapshot> listaProductos;
+    private FirebaseFirestore firestore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,47 +29,40 @@ public class ActividadSeleccionarProducto extends AppCompatActivity {
         listaProductos = new ArrayList<>();
         productoAdaptador = new ProductoAdaptador2(listaProductos, this);
 
-
         productRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         productRecyclerView.setAdapter(productoAdaptador);
-
 
         int espaciadoVerticalEnPixeles = getResources().getDimensionPixelSize(R.dimen.espaciado_vertical);
         productRecyclerView.addItemDecoration(new EspaciadoArticulo(espaciadoVerticalEnPixeles));
 
+        firestore = FirebaseFirestore.getInstance();
+        cargarProductosDesdeFirestore();
 
-        enumerarYDescargarArchivosJSON();
-    }
+        Button volverButton = findViewById(R.id.volver);
+        volverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-    private void enumerarYDescargarArchivosJSON() {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference referenciaAlmacenamiento = storage.getReference().child("productos");
-
-        referenciaAlmacenamiento.listAll().addOnSuccessListener(listResult -> {
-            for (StorageReference item : listResult.getItems()) {
-
-                descargarJSONDesdeFirebaseStorage(item);
+                Intent intent = new Intent(ActividadSeleccionarProducto.this, ActividadInicioAdministrador.class);
+                startActivity(intent);
+                finish();
             }
-        }).addOnFailureListener(e -> {
-            e.printStackTrace();
         });
     }
 
-    private void descargarJSONDesdeFirebaseStorage(StorageReference referenciaAlmacenamiento) {
-        referenciaAlmacenamiento.getBytes(1024 * 1024).addOnSuccessListener(bytes -> {
+    private void cargarProductosDesdeFirestore() {
+        firestore.collection("productos")
+                .orderBy("nombre")
+                .limit(50)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<DocumentSnapshot> documents = task.getResult().getDocuments();
+                        listaProductos.addAll(documents);
+                        productoAdaptador.notifyDataSetChanged();
+                    } else {
 
-            String jsonString = new String(bytes);
-
-
-            try {
-                JSONObject jsonObject = new JSONObject(jsonString);
-                listaProductos.add(jsonObject);
-                productoAdaptador.notifyDataSetChanged();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).addOnFailureListener(e -> {
-            e.printStackTrace();
-        });
+                    }
+                });
     }
 }

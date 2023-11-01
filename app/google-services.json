@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "477637628340",
-    "project_id": "farmaciamovil-ea50e",
-    "storage_bucket": "farmaciamovil-ea50e.appspot.com"
+    "project_number": "621736642467",
+    "project_id": "farmaciamovil-9f724",
+    "storage_bucket": "farmaciamovil-9f724.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:477637628340:android:71e7ceae56294e487ee2e1",
+        "mobilesdk_app_id": "1:621736642467:android:5afb4d5fd6c9ff65863c16",
         "android_client_info": {
           "package_name": "com.example.farmaciamovil"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBd76N-3qubYXiD_g-FnjSYi59r9jYw5lE"
+          "current_key": "AIzaSyBrnAE-bkIRbKdovuVavwkTyMq3ZfaSy5k"
         }
       ],
       "services": {

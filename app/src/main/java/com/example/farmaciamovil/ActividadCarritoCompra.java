@@ -14,16 +14,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,20 +45,18 @@ public class ActividadCarritoCompra extends AppCompatActivity {
             String nombreProducto = intent.getStringExtra("nombre_producto");
             String cantidad = intent.getStringExtra("cantidad");
             String precio = intent.getStringExtra("precio");
-            String imagenUrl = intent.getStringExtra("imagenUrl"); // Obtener la URL de la imagen
+            String imagenUrl = intent.getStringExtra("imagenUrl");
 
             textViewNombreProducto.setText(nombreProducto);
             textViewCantidad.setText(cantidad);
             textViewPrecio.setText(precio);
 
-
             Glide.with(this)
                     .load(imagenUrl)
                     .apply(new RequestOptions()
-                            .diskCacheStrategy(DiskCacheStrategy.DATA)) // Para evitar guardar en caché
+                            .diskCacheStrategy(DiskCacheStrategy.DATA))
                     .into(imageViewProducto);
         }
-
 
         cargarDatosParaSpinner();
 
@@ -72,7 +64,6 @@ public class ActividadCarritoCompra extends AppCompatActivity {
         buttonVolver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadCarritoCompra.this, ActividadInicio.class);
                 startActivity(intent);
             }
@@ -82,7 +73,6 @@ public class ActividadCarritoCompra extends AppCompatActivity {
         buttonFinalizarCompra.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadCarritoCompra.this, ActividadEnviodeProducto.class);
                 startActivity(intent);
             }
@@ -104,52 +94,28 @@ public class ActividadCarritoCompra extends AppCompatActivity {
         }
     }
 
-
     private void cargarDatosParaSpinner() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference();
+        db.collection("direcciones")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<String> nombresCalles = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
 
+                            String nombreCalle = document.getString("nombreCalle");
+                            nombresCalles.add(nombreCalle);
+                        }
 
-        StorageReference direccionesRef = storageRef.child("direcciones");
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                this, android.R.layout.simple_spinner_item, nombresCalles);
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
+                        spinnerOpciones.setAdapter(adapter);
+                    } else {
 
-        final List<String> nombresCalles = new ArrayList<>();
-
-
-        direccionesRef.listAll()
-                .addOnSuccessListener(listResult -> {
-                    for (StorageReference item : listResult.getItems()) {
-                        item.getBytes(10240)
-                                .addOnSuccessListener(bytes -> {
-                                    try {
-
-                                        String jsonStr = new String(bytes, "UTF-8");
-
-
-                                        JSONObject jsonObject = new JSONObject(jsonStr);
-
-
-                                        String nombreCalle = jsonObject.getString("nombreCalle");
-                                        nombresCalles.add(nombreCalle);
-
-
-                                        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                                                this, android.R.layout.simple_spinner_item, nombresCalles);
-                                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-
-                                        spinnerOpciones.setAdapter(adapter);
-
-                                    } catch (IOException | JSONException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
                     }
-                })
-                .addOnFailureListener(e -> {
-
-                    e.printStackTrace();
                 });
     }
 }

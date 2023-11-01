@@ -83,6 +83,15 @@
                 android:layout_height="wrap_content"
                 android:text="Añadir Dirección"
                 android:layout_marginTop="16dp" />
+
+            <TextView
+                android:id="@+id/mensajeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mensaje de éxito"
+                android:visibility="invisible" /><!-- Puedes configurar la visibilidad según tus necesidades -->
+
+
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 </RelativeLayout>

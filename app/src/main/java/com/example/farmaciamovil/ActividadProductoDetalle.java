@@ -52,13 +52,13 @@ public class ActividadProductoDetalle extends AppCompatActivity {
                 String nombre = nombreProducto.getText().toString();
                 String cantidad = cantidadUnidades.getText().toString();
                 String precio = valorProducto.getText().toString();
-                String imagenUrl = getIntent().getStringExtra("imagenUrl"); // Obtener la URL de la imagen
+                String imagenUrl = getIntent().getStringExtra("imagenUrl");
 
 
                 intent.putExtra("nombre_producto", nombre);
                 intent.putExtra("cantidad", cantidad);
                 intent.putExtra("precio", precio);
-                intent.putExtra("imagenUrl", imagenUrl); // Pasar la URL de la imagen
+                intent.putExtra("imagenUrl", imagenUrl);
 
 
                 startActivity(intent);
@@ -82,7 +82,7 @@ public class ActividadProductoDetalle extends AppCompatActivity {
             Glide.with(this)
                     .load(imagenUrl)
                     .apply(new RequestOptions()
-                            .diskCacheStrategy(DiskCacheStrategy.DATA)) // Para evitar guardar en caché
+                            .diskCacheStrategy(DiskCacheStrategy.DATA))
                     .into(imagenProducto);
         }
     }

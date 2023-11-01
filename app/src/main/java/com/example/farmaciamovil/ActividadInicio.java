@@ -1,4 +1,5 @@
 package com.example.farmaciamovil;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -6,14 +7,13 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.farmaciamovil.Producto;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class ActividadInicio extends AppCompatActivity {
     private RecyclerView recyclerViewResultados;
     private ProductoAdapter productoAdapter;
     private List<Producto> resultadosBusqueda;
-    private FirebaseStorage storage;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +39,7 @@ public class ActividadInicio extends AppCompatActivity {
         productoAdapter = new ProductoAdapter(resultadosBusqueda, this);
         recyclerViewResultados.setAdapter(productoAdapter);
 
-        storage = FirebaseStorage.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         editTextBuscar.addTextChangedListener(new TextWatcher() {
             @Override
@@ -61,7 +61,6 @@ public class ActividadInicio extends AppCompatActivity {
         informacionImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadInicio.this, ActividadInformacionPersonal.class);
                 startActivity(intent);
             }
@@ -71,8 +70,19 @@ public class ActividadInicio extends AppCompatActivity {
         ubicacionImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadInicio.this, ActividadMisDirecciones.class);
+                startActivity(intent);
+            }
+        });
+
+        TextView textViewVolver = findViewById(R.id.textViewVolver);
+        textViewVolver.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(ActividadInicio.this, ActividadPrincipal.class);
+
+
                 startActivity(intent);
             }
         });
@@ -86,29 +96,16 @@ public class ActividadInicio extends AppCompatActivity {
             return;
         }
 
-        StorageReference storageRef = storage.getReference().child("productos");
-
-
-        StorageReference archivoJSON = storageRef.child(textoBusqueda + ".json");
-
-        archivoJSON.getBytes(1024 * 1024)
-                .addOnSuccessListener(bytes -> {
-                    try {
-
-                        JSONObject jsonObject = new JSONObject(new String(bytes));
-                        String nombre = jsonObject.getString("nombre");
-                        String imagenUrl = jsonObject.getString("imagenUrl");
-                        double valor = jsonObject.getDouble("valor");
-                        int cantidadUnidades = jsonObject.getInt("cantidadUnidades");
-                        String descripcion = jsonObject.getString("descripcion"); // Agregar la descripción
-
-
-                        Producto producto = new Producto(nombre, imagenUrl, valor, cantidadUnidades, descripcion);
-                        resultadosBusqueda.add(producto);
+        db.collection("productos")
+                .whereEqualTo("nombre", textoBusqueda)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (com.google.firebase.firestore.DocumentSnapshot document : task.getResult().getDocuments()) {
+                            Producto producto = document.toObject(Producto.class);
+                            resultadosBusqueda.add(producto);
+                        }
                         productoAdapter.notifyDataSetChanged();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-
                     }
                 })
                 .addOnFailureListener(e -> {

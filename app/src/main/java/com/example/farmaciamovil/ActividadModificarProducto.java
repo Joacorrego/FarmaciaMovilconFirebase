@@ -1,21 +1,30 @@
 package com.example.farmaciamovil;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.firebase.storage.UploadTask;
+import android.graphics.BitmapFactory;
+
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class ActividadModificarProducto extends AppCompatActivity {
-    private JSONObject producto;
     private ImageView imagenProductoDetalle;
     private EditText nombreProductoDetalle;
     private EditText cantidadUnidadesDetalle;
@@ -24,20 +33,23 @@ public class ActividadModificarProducto extends AppCompatActivity {
     private Button botonGuardarCambios;
     private Button botonEliminarProducto;
     private static final int SELECCIONAR_IMAGEN = 1;
+    private FirebaseFirestore db;
+    private FirebaseStorage storage;
+    private Uri imageUri;
+    private DocumentReference productReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.actividad_modificarproducto);
 
+        db = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
+
         Intent intent = getIntent();
         if (intent != null) {
-            String datosJSON = intent.getStringExtra("datosJSON");
-            try {
-                producto = new JSONObject(datosJSON);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+            String productoId = intent.getStringExtra("productoId");
+            productReference = db.collection("productos").document(productoId);
         }
 
         imagenProductoDetalle = findViewById(R.id.imagenProductoDetalle);
@@ -48,14 +60,17 @@ public class ActividadModificarProducto extends AppCompatActivity {
         botonGuardarCambios = findViewById(R.id.botonGuardarCambios);
         botonEliminarProducto = findViewById(R.id.botonEliminarProducto);
 
-        try {
-            nombreProductoDetalle.setText(producto.getString("nombre"));
-            cantidadUnidadesDetalle.setText(String.valueOf(producto.getInt("cantidadUnidades")));
-            valorProductoDetalle.setText(String.valueOf(producto.getInt("valor")));
-            descripcionProductoDetalle.setText(producto.getString("descripcion"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        productReference.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                Producto producto = documentSnapshot.toObject(Producto.class);
+                if (producto != null) {
+                    nombreProductoDetalle.setText(producto.getNombre());
+                    cantidadUnidadesDetalle.setText(String.valueOf(producto.getCantidadUnidades()));
+                    valorProductoDetalle.setText(String.valueOf(producto.getValor()));
+                    descripcionProductoDetalle.setText(producto.getDescripcion());
+                }
+            }
+        });
 
         imagenProductoDetalle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,50 +86,90 @@ public class ActividadModificarProducto extends AppCompatActivity {
             public void onClick(View view) {
                 try {
                     String nuevoNombre = nombreProductoDetalle.getText().toString();
-                    int cantidadUnidades = Integer.parseInt(cantidadUnidadesDetalle.getText().toString());
-                    int valor = Integer.parseInt(valorProductoDetalle.getText().toString());
+                    long cantidadUnidades = Long.parseLong(cantidadUnidadesDetalle.getText().toString());
+                    double valor = Double.parseDouble(valorProductoDetalle.getText().toString());
                     String descripcion = descripcionProductoDetalle.getText().toString();
 
-                    String nombreArchivoActual = producto.optString("nombre") + ".json";
-                    eliminarJSONDeFirebase(nombreArchivoActual);
 
-                    producto.put("nombre", nuevoNombre);
-                    producto.put("cantidadUnidades", cantidadUnidades);
-                    producto.put("valor", valor);
-                    producto.put("descripcion", descripcion);
+                    productReference.update(
+                            "nombre", nuevoNombre,
+                            "cantidadUnidades", cantidadUnidades,
+                            "valor", valor,
+                            "descripcion", descripcion
+                    ).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            if (imageUri != null) {
 
-                    String nombreArchivoNuevo = nuevoNombre + ".json";
-                    guardarCambiosEnFirebase(nombreArchivoNuevo);
-                } catch (JSONException e) {
+                                StorageReference storageRef = storage.getReference();
+                                StorageReference imageRef = storageRef.child("fotosproducto/" + nuevoNombre);
+
+
+                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                try {
+                                    InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                                    Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                                    byte[] imageData = baos.toByteArray();
+                                    UploadTask uploadTask = imageRef.putBytes(imageData);
+                                    uploadTask.addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                        @Override
+                                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                                            imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                                @Override
+                                                public void onSuccess(Uri uri) {
+                                                    String nuevaImagenUrl = uri.toString();
+
+
+                                                    productReference.update("imagenUrl", nuevaImagenUrl);
+                                                    volverAActividadSeleccionarProducto();
+                                                }
+                                            });
+                                        }
+                                    });
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                volverAActividadSeleccionarProducto();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
 
-
         botonEliminarProducto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String nombreArchivoActual = producto.optString("nombre") + ".json";
-                eliminarJSONDeFirebase(nombreArchivoActual);
+                String nombreProducto = nombreProductoDetalle.getText().toString();
+                String imagenPath = "fotosproducto/" + nombreProducto;
+
+                StorageReference storageRef = storage.getReference().child(imagenPath);
+                storageRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        productReference.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                volverAActividadSeleccionarProducto();
+                            }
+                        });
+                    }
+                });
             }
         });
     }
-
-
-    private void eliminarJSONDeFirebase(String nombreArchivo) {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference referenciaAlmacenamiento = storage.getReference().child("productos");
-
-        referenciaAlmacenamiento.child(nombreArchivo).delete()
-                .addOnSuccessListener(aVoid -> {
-                    volverAActividadSeleccionarProducto();
-                })
-                .addOnFailureListener(e -> {
-                    e.printStackTrace();
-                });
-    }
-
 
     private void volverAActividadSeleccionarProducto() {
         Intent intent = new Intent(ActividadModificarProducto.this, ActividadSeleccionarProducto.class);
@@ -122,33 +177,15 @@ public class ActividadModificarProducto extends AppCompatActivity {
         finish();
     }
 
-
-    private void guardarCambiosEnFirebase(String nombreArchivo) {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference referenciaAlmacenamiento = storage.getReference().child("productos/" + nombreArchivo);
-
-        String nuevoJSON = producto.toString();
-        referenciaAlmacenamiento.putBytes(nuevoJSON.getBytes())
-                .addOnSuccessListener(taskSnapshot -> {
-                    volverAActividadSeleccionarProducto();
-                })
-                .addOnFailureListener(e -> {
-                    e.printStackTrace();
-                });
-    }
-
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SELECCIONAR_IMAGEN && resultCode == RESULT_OK && data != null) {
-            Uri imagenUri = data.getData();
-            producto.remove("imagenUrl");
-            try {
-                producto.put("imagenUrl", imagenUri.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
+
+        if (requestCode == SELECCIONAR_IMAGEN && resultCode == RESULT_OK) {
+            if (data != null) {
+                imageUri = data.getData();
+                imagenProductoDetalle.setImageURI(imageUri);
             }
-            imagenProductoDetalle.setImageURI(imagenUri);
         }
     }
 }

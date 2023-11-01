@@ -1,20 +1,17 @@
 package com.example.farmaciamovil;
-import org.json.JSONObject;
-import org.json.JSONException;
 import android.os.Bundle;
 import android.content.Intent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.farmaciamovil.ActividadAnadirDireccion;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.ListResult;
-import com.google.firebase.storage.StorageReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ActividadMisDirecciones extends AppCompatActivity {
@@ -28,25 +25,26 @@ public class ActividadMisDirecciones extends AppCompatActivity {
 
         direccionTextView = findViewById(R.id.direccionTextView);
 
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference().child("direcciones");
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        storageRef.listAll()
-                .addOnSuccessListener(new OnSuccessListener<ListResult>() {
+        db.collection("direcciones")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
-                    public void onSuccess(ListResult listResult) {
-                        List<StorageReference> files = listResult.getItems();
-                        if (files.isEmpty()) {
-                            direccionTextView.setText("No se encontraron archivos JSON en la carpeta 'direcciones'.");
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        List<DocumentSnapshot> documents = queryDocumentSnapshots.getDocuments();
+
+                        if (documents.isEmpty()) {
+                            direccionTextView.setText("No se encontraron direcciones en Firestore.");
                         } else {
-                            mostrarContenidoArchivos(files);
+                            mostrarDirecciones(documents);
                         }
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        direccionTextView.setText("Error al acceder a Firebase Storage.");
+                    public void onFailure(Exception e) {
+                        direccionTextView.setText("Error al acceder a Firestore.");
                     }
                 });
 
@@ -56,7 +54,6 @@ public class ActividadMisDirecciones extends AppCompatActivity {
         botonAgregarDireccion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadMisDirecciones.this, ActividadAnadirDireccion.class);
                 startActivity(intent);
             }
@@ -65,56 +62,23 @@ public class ActividadMisDirecciones extends AppCompatActivity {
         botonVolver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(ActividadMisDirecciones.this, ActividadInicio.class);
                 startActivity(intent);
             }
         });
     }
 
-    private void mostrarContenidoArchivos(List<StorageReference> files) {
-        List<String> contenidoArchivos = new ArrayList<>();
-        int numArchivos = files.size();
+    private void mostrarDirecciones(List<DocumentSnapshot> documents) {
+        for (DocumentSnapshot doc : documents) {
+            String nombreCalle = doc.getString("nombreCalle");
+            String numeroCalle = doc.getString("numeroCalle");
+            String region = doc.getString("region");
+            String ciudad = doc.getString("ciudad");
 
-        for (StorageReference file : files) {
-            file.getBytes(1024 * 1024)
-                    .addOnSuccessListener(new OnSuccessListener<byte[]>() {
-                        @Override
-                        public void onSuccess(byte[] bytes) {
-                            String jsonString = new String(bytes);
-
-
-                            contenidoArchivos.add(jsonString);
-
-
-                            if (contenidoArchivos.size() == numArchivos) {
-                                mostrarContenido(contenidoArchivos);
-                            }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception exception) {
-
-                        }
-                    });
-        }
-    }
-
-    private void mostrarContenido(List<String> contenidoArchivos) {
-        for (String jsonString : contenidoArchivos) {
-            try {
-
-                JSONObject jsonObject = new JSONObject(jsonString);
-
-
-                direccionTextView.append("Nombre de la calle: " + jsonObject.getString("nombreCalle") + "\n");
-                direccionTextView.append("Número de la calle: " + jsonObject.getString("numeroCalle") + "\n");
-                direccionTextView.append("Región: " + jsonObject.getString("region") + "\n");
-                direccionTextView.append("Ciudad: " + jsonObject.getString("ciudad") + "\n\n");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            direccionTextView.append("Nombre de la calle: " + nombreCalle + "\n");
+            direccionTextView.append("Número de la calle: " + numeroCalle + "\n");
+            direccionTextView.append("Región: " + region + "\n");
+            direccionTextView.append("Ciudad: " + ciudad + "\n\n");
         }
     }
 }

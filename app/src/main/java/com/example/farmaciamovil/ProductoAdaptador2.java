@@ -9,16 +9,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.List;
 
 public class ProductoAdaptador2 extends RecyclerView.Adapter<ProductoAdaptador2.ViewHolder> {
 
-    private List<JSONObject> productList;
+    private List<DocumentSnapshot> productList;
     private Context context;
 
-    public ProductoAdaptador2(List<JSONObject> productList, Context context) {
+    public ProductoAdaptador2(List<DocumentSnapshot> productList, Context context) {
         this.productList = productList;
         this.context = context;
     }
@@ -31,27 +30,27 @@ public class ProductoAdaptador2 extends RecyclerView.Adapter<ProductoAdaptador2.
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        JSONObject producto = productList.get(position);
+        DocumentSnapshot document = productList.get(position);
+        if (document.exists()) {
+            String nombre = document.getString("nombre");
+            double valor = document.getDouble("valor");
+            long cantidadUnidades = document.getLong("cantidadUnidades");
+            String imagenUrl = document.getString("imagenUrl");
 
-        try {
-            holder.nombreProducto.setText(producto.getString("nombre"));
-            holder.valorProducto.setText("Valor: $" + producto.getInt("valor"));
-            holder.cantidadUnidades.setText("Cantidad de Unidades: " + producto.getInt("cantidadUnidades"));
+            holder.nombreProducto.setText(nombre);
+            holder.valorProducto.setText("Valor: $" + valor);
+            holder.cantidadUnidades.setText("Cantidad de Unidades: " + cantidadUnidades);
 
-            String imageUrl = producto.getString("imagenUrl");
-            Glide.with(context).load(imageUrl).into(holder.imagenProducto);
+            Glide.with(context).load(imagenUrl).into(holder.imagenProducto);
 
             holder.imagenProducto.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
                     Intent intent = new Intent(context, ActividadModificarProducto.class);
-                    intent.putExtra("datosJSON", producto.toString()); // Pasa los datos del producto
+                    intent.putExtra("productoId", document.getId());
                     context.startActivity(intent);
                 }
             });
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
     }
 
